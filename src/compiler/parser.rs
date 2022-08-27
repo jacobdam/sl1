@@ -1,12 +1,10 @@
 use combine::error::StringStreamError;
-use combine::parser::char::{string};
-use combine::{any, between, choice, eof, many, none_of, Parser, sep_by, token};
-use crate::compiler::ast::{PrintStatement, Program, Statement, StringLiteral};
+use combine::parser::char::{digit, string};
+use combine::{any, between, choice, eof, many, many1, none_of, Parser, sep_by, token};
+use crate::compiler::ast::{NumberLiteral, PrintStatement, Program, Statement, StringLiteral};
 use crate::compiler::ast::Expression;
 
 pub fn parse(source: &str) -> Result<Program, StringStreamError> {
-
-
     let string_item = choice!(
         none_of("\\\"".chars()),
         (token('\\'), any()).map(|(_, c)| c)
@@ -16,8 +14,14 @@ pub fn parse(source: &str) -> Result<Program, StringStreamError> {
         token('"'),
         many::<Vec<char>, _, _>(string_item)
     ).map(|chars| StringLiteral { value: chars.iter().collect::<String>() });
+
+    let number_p = many1(digit())
+        .and_then(|s: String| s.parse::<i32>().map_err(|_| StringStreamError::UnexpectedParse))
+        .map(|value| NumberLiteral{ value });
+
     let expression_p = choice!(
-        string_literal_p.map(|expr| Expression::StringLiteral(Box::new(expr)))
+        string_literal_p.map(|expr| Expression::StringLiteral(Box::new(expr))),
+        number_p.map(|expr| Expression::NumberLiteral(Box::new(expr)))
     );
     let arguments_p = sep_by(expression_p, token(','));
 

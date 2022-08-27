@@ -15,7 +15,8 @@ pub struct PrintStatement {
 
 #[derive(Debug)]
 pub enum Expression {
-    StringLiteral(Box<StringLiteral>)
+    StringLiteral(Box<StringLiteral>),
+    NumberLiteral(Box<NumberLiteral>)
 }
 
 #[derive(Debug)]
